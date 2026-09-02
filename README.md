@@ -24,6 +24,23 @@ history, and statistics for daily, weekly, monthly, and yearly periods.
 - Context providers for records, goals, profiles, and settings.
 - Formik and Yup for forms and validation.
 
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[Expo Router screens] --> State[React context providers]
+    State --> Cache[AsyncStorage cache]
+    State --> Queue[Offline synchronization queue]
+    Queue --> API[Supabase client]
+    API --> Auth[Authentication]
+    API --> Data[PostgreSQL data with RLS]
+    State --> Insights[Goals and statistics]
+```
+
+The context layer gives screens one consistent interface while local storage
+keeps recent data available offline. Queued changes synchronize through the
+Supabase client when network access returns.
+
 ## Run locally
 
 Install Node.js 18 or later, npm, and one of the following:
