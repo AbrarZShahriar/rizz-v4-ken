@@ -1,9 +1,9 @@
-import { Image, StyleSheet, Alert, View } from 'react-native';
+import { StyleSheet, Alert, View } from 'react-native';
 import { Button } from 'react-native-paper';
 import { format } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CounterType } from '@/lib/types/record';
 import { useTranslation } from 'react-i18next';
 
@@ -13,22 +13,19 @@ import { ThemedView } from '@/components/ThemedView';
 import { CounterButton } from '@/components/counter/CounterButton';
 import { ProgressDisplay } from '@/components/counter/ProgressDisplay';
 import { useAuth } from '@/contexts/AuthContext';
-import { useCounter } from '@/contexts/CounterContext';
 import { useRecord } from '@/contexts/RecordContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useGoal } from '@/contexts/GoalContext';
-import { debugAuthAndProfile } from '@/services/auth-debug';
-import { resetCounters } from '@/services/reset-counters';
 import * as recordService from '@/services/record';
 import * as dailyGoalsService from '@/src/services/daily-goals';
 
 // 明示的なデフォルトエクスポート
 function HomeScreen() {
-  const { user, signOut, isLoading: authLoading } = useAuth();
+  const { user, signOut } = useAuth();
   const { profile } = useProfile();
-  const { counters, loading: counterLoading, resetCounters: resetCounterContext, incrementCounter, decrementCounter } = useCounter();
-  const { incrementCounter: recordIncrementCounter, loading: recordLoading, error, isOnline, dailyRecords } = useRecord();
-  const { getGoal, goals } = useGoal();
+  const { incrementCounter: recordIncrementCounter, loading: recordLoading, error, isOnline } = useRecord();
+  const { goals } = useGoal();
+  const dailyGoal = goals.daily;
   const [targets, setTargets] = useState({
     approached: 0,
     getContact: 0,
@@ -44,59 +41,6 @@ function HomeScreen() {
   const today = new Date();
   const { t } = useTranslation();
   const formattedDate = format(today, t('date_format', { defaultValue: 'yyyy年MM月dd日（EEEE）' }), { locale: ja });
-
-  // 画面が表示されたとき、カウンターと目標値をリセット
-  useEffect(() => {
-    const init = async () => {
-      const today = new Date().toISOString().split('T')[0];
-      await reloadTargets(today);
-    };
-    init();
-  }, []);
-
-  // GoalContextのgoals.dailyが変化したらtargets stateを同期
-  useEffect(() => {
-    if (goals && goals.daily) {
-      setTargets({
-        approached: goals.daily.approached ?? 0,
-        getContact: goals.daily.getContact ?? 0,
-        instantDate: goals.daily.instantDate ?? 0,
-        instantCv: goals.daily.instantCv ?? 0,
-      });
-    }
-  }, [goals.daily]);
-
-  // 日次目標を読み込む
-  const loadDailyGoals = async (date: string) => {
-    try {
-      const goal = await getGoal('daily', date);
-      if (goal) {
-        setTargets({
-          approached: goal.approached ?? 0,
-          getContact: goal.getContact ?? 0,
-          instantDate: goal.instantDate ?? 0,
-          instantCv: goal.instantCv ?? 0,
-        });
-      } else {
-        // デフォルト値をセット
-        setTargets({
-          approached: 0,
-          getContact: 0,
-          instantDate: 0,
-          instantCv: 0,
-        });
-      }
-    } catch (error) {
-      // エラー時もデフォルト値をセット
-      setTargets({
-        approached: 0,
-        getContact: 0,
-        instantDate: 0,
-        instantCv: 0,
-      });
-      console.error('Failed to load daily goals:', error);
-    }
-  };
 
   // 現在の日付を取得する関数
   const getCurrentDate = () => {
@@ -147,7 +91,7 @@ function HomeScreen() {
   };
 
   // 実績値と目標値を両方再読み込み
-  const reloadTargets = async (dateParam?: string) => {
+  const reloadTargets = useCallback(async (dateParam?: string) => {
     try {
       const today = dateParam || getCurrentDate();
       // daily_records
@@ -188,10 +132,31 @@ function HomeScreen() {
         instant_cv: record?.instant_cv ?? 0,
       });
       Alert.alert(t('success'), t('reload_success'));
-    } catch (error) {
+    } catch {
       Alert.alert(t('error'), t('reload_error'));
     }
-  };
+  }, [t]);
+
+  // 画面が表示されたとき、カウンターと目標値をリセット
+  useEffect(() => {
+    const init = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      await reloadTargets(today);
+    };
+    init();
+  }, [reloadTargets]);
+
+  // GoalContextのgoals.dailyが変化したらtargets stateを同期
+  useEffect(() => {
+    if (dailyGoal) {
+      setTargets({
+        approached: dailyGoal.approached ?? 0,
+        getContact: dailyGoal.getContact ?? 0,
+        instantDate: dailyGoal.instantDate ?? 0,
+        instantCv: dailyGoal.instantCv ?? 0,
+      });
+    }
+  }, [dailyGoal]);
 
   return (
     <ParallaxScrollView

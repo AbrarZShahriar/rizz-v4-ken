@@ -105,9 +105,9 @@ npm run test:ci # Run Jest once, as CI does
 ```
 
 The repository runs these checks on GitHub Actions. The current baseline passes
-Expo Doctor, ESLint, TypeScript, and Jest. ESLint still reports warnings in the
-prototype code. The Expo SDK 52 dependency tree also retains advisories that
-require a later SDK migration; do not treat this snapshot as production-ready.
+Expo Doctor, ESLint without warnings, TypeScript, and Jest. The Expo SDK 52
+dependency tree still retains advisories that require a later SDK migration; do
+not treat this snapshot as production-ready.
 
 ## Data and security
 

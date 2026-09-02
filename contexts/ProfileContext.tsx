@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useCallback, useContext, useState, useEffect, ReactNode } from 'react';
 import { Profile, ProfileUpdateData } from '../src/types/profile';
 import * as profileService from '../services/profile';
 import { useAuth } from './AuthContext';
@@ -34,7 +34,7 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
   const [error, setError] = useState<Error | null>(null);
   const { session } = useAuth();
 
-  const refreshProfile = async (): Promise<void> => {
+  const refreshProfile = useCallback(async (): Promise<void> => {
     if (!session) {
       setProfile(null);
       setLoading(false);
@@ -80,14 +80,14 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, [session]);
 
   useEffect(() => {
     // セッションが変更されたときにプロフィールをリフレッシュ
     refreshProfile();
-  }, [session]); // sessionを依存配列に追加
+  }, [refreshProfile]);
 
-  const updateProfile = async (data: ProfileUpdateData): Promise<void> => {
+  const updateProfile = useCallback(async (data: ProfileUpdateData): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -99,9 +99,9 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const changePassword = async (currentPassword: string, newPassword: string): Promise<void> => {
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -112,9 +112,9 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateTheme = async (theme: 'light' | 'dark'): Promise<void> => {
+  const updateTheme = useCallback(async (theme: 'light' | 'dark'): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -126,7 +126,7 @@ export const ProfileProvider: React.FC<ProfileProviderProps> = ({ children }) =>
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const value: ProfileContextType = {
     profile,

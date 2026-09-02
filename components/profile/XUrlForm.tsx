@@ -17,7 +17,7 @@ const XUrlSchema = Yup.object().shape({
         try {
           const url = new URL(value);
           return url.protocol === 'http:' || url.protocol === 'https:';
-        } catch (e) {
+        } catch {
           return false;
         }
       }
@@ -33,7 +33,7 @@ const XUrlSchema = Yup.object().shape({
                  url.hostname === 'www.twitter.com' ||
                  url.hostname === 'x.com' ||
                  url.hostname === 'www.x.com';
-        } catch (e) {
+        } catch {
           return false;
         }
       }
@@ -50,7 +50,7 @@ export const XUrlForm: React.FC = () => {
       await updateProfile({ x_url: values.x_url });
       setSnackbarMessage('X(Twitter)URLを更新しました');
       setSnackbarVisible(true);
-    } catch (error) {
+    } catch {
       setSnackbarMessage('X(Twitter)URLの更新に失敗しました');
       setSnackbarVisible(true);
     }

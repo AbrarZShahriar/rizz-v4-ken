@@ -15,7 +15,7 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { RecordProvider } from '@/contexts/RecordContext';
 import { GoalProvider } from '@/contexts/GoalContext';
 import { CounterProvider } from '@/contexts/CounterContext';
-import { ProfileProvider } from '@/contexts/ProfileContext';
+import { ProfileProvider, useProfile } from '@/contexts/ProfileContext';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -54,6 +54,19 @@ function AuthRedirect() {
   return null;
 }
 
+function I18nLanguageSync({ children }: { children: React.ReactNode }) {
+  const { profile } = useProfile();
+  const language = profile?.language;
+
+  React.useEffect(() => {
+    if (typeof language === 'number') {
+      i18n.changeLanguage(language === 0 ? 'ja' : 'en');
+    }
+  }, [language]);
+
+  return children;
+}
+
 // 明示的なデフォルトエクスポート
 function RootLayout() {
   // カスタムuseColorSchemeフックを使用
@@ -83,20 +96,6 @@ function RootLayout() {
 
   // 現在のカラースキームに基づくテーマを選択
   const theme = colorScheme === 'dark' ? combinedDarkTheme : combinedDefaultTheme;
-
-  // ProfileProvider配下でのみuseProfileが使えるため、useProfileをimportし、profile.languageでi18nを切り替え
-  // ただし、useProfileはProfileProvider配下でしか呼べないため、ProfileProviderの子でラップする必要がある
-  // そのため、ProfileProvider配下でラッパーを作成
-
-  function I18nLanguageSync({ children }: { children: React.ReactNode }) {
-    const { profile } = require('@/contexts/ProfileContext').useProfile();
-    React.useEffect(() => {
-      if (profile && typeof profile.language === 'number') {
-        i18n.changeLanguage(profile.language === 0 ? 'ja' : 'en');
-      }
-    }, [profile?.language]);
-    return children;
-  }
 
   useEffect(() => {
     if (loaded) {

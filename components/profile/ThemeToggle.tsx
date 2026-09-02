@@ -30,7 +30,7 @@ export const ThemeToggle: React.FC = () => {
         console.error('テーマ設定の同期エラー:', err);
       });
     }
-  }, [profile, colorScheme]);
+  }, [profile, colorScheme, updateTheme]);
 
   // アプリをリロードする関数
   const reloadApp = async () => {
@@ -72,7 +72,7 @@ export const ThemeToggle: React.FC = () => {
       setTimeout(async () => {
         await reloadApp();
       }, 500);
-    } catch (error) {
+    } catch {
       setSnackbarMessage('テーマの変更に失敗しました');
       setSnackbarVisible(true);
       setIsUpdating(false);

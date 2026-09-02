@@ -91,36 +91,23 @@ export const GoalProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [error, setError] = useState<Error | null>(null);
   const [isOnline, setIsOnline] = useState(true);
 
-  // ネットワーク状態監視
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      setIsOnline(!!state.isConnected);
-      if (state.isConnected) {
-        syncOfflineChanges();
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  // 初期ロード
-  useEffect(() => {
-    loadGoals();
-  }, []);
-
   // ローカルストレージから目標を読み込む
-  const loadGoals = async () => {
+  const loadGoals = useCallback(async () => {
     try {
       const data = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-      if (data) {
-        setGoals(JSON.parse(data));
-      }
+      let updatedGoals: Record<PeriodType, GoalValues> = data
+        ? JSON.parse(data)
+        : getDefaultGoals();
+
+      // Keep the cached value usable even when the remote refresh is unavailable.
+      setGoals(updatedGoals);
 
       // 日次目標の場合は、Supabaseから最新のデータを取得
       const today = format(new Date(), 'yyyy-MM-dd');
       const dailyGoal = await dailyGoalsService.getDailyGoal(today);
       if (dailyGoal.data) {
-        const updatedGoals: Record<PeriodType, GoalValues> = {
-          ...goals,
+        updatedGoals = {
+          ...updatedGoals,
           daily: {
             period: 'daily' as const,
             approached: dailyGoal.data.approached_target,
@@ -139,10 +126,69 @@ export const GoalProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  // オフライン変更の同期
+  const syncOfflineChanges = useCallback(async () => {
+    try {
+      const networkState = await NetInfo.fetch();
+      if (!networkState.isConnected) return;
+
+      const queue = await getGoalChangeQueue();
+      if (queue.length === 0) return;
+
+      const storedGoals = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
+      const updatedGoals: Record<PeriodType, GoalValues> = storedGoals
+        ? JSON.parse(storedGoals)
+        : getDefaultGoals();
+
+      for (const item of queue) {
+        if (item.action === 'upsertGoal') {
+          const currentGoal = updatedGoals[item.data.period];
+          if (item.data.period === 'daily' && item.data.date) {
+            // daily_goalsテーブルに保存
+            const result = await dailyGoalsService.upsertDailyGoal({
+              target_date: item.data.date,
+              approached_target: item.data.approached ?? currentGoal.approached,
+              get_contacts_target: item.data.getContact ?? currentGoal.getContact,
+              instant_dates_target: item.data.instantDate ?? currentGoal.instantDate,
+              instant_cv_target: item.data.instantCv ?? currentGoal.instantCv,
+            });
+            if (result.error) throw result.error;
+          }
+
+          const period = item.data.period;
+          updatedGoals[period] = { ...updatedGoals[period], ...item.data };
+        }
+      }
+
+      await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(updatedGoals));
+      setGoals(updatedGoals);
+      await AsyncStorage.removeItem('offlineGoalChangeQueue');
+    } catch (error) {
+      console.error('同期エラー:', error);
+      setError(error instanceof Error ? error : new Error('オフライン変更の同期に失敗しました'));
+    }
+  }, []);
+
+  // ネットワーク状態監視
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      setIsOnline(!!state.isConnected);
+      if (state.isConnected) {
+        syncOfflineChanges();
+      }
+    });
+    return () => unsubscribe();
+  }, [syncOfflineChanges]);
+
+  // 初期ロード
+  useEffect(() => {
+    loadGoals();
+  }, [loadGoals]);
 
   // 目標値の同期
-  const syncGoals = async () => {
+  const syncGoals = useCallback(async () => {
     setLoading(true);
     try {
       await loadGoals();
@@ -152,50 +198,7 @@ export const GoalProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setLoading(false);
     }
-  };
-
-  // オフライン変更の同期
-  const syncOfflineChanges = async () => {
-    if (!isOnline) return;
-
-    const queue = await getGoalChangeQueue();
-    if (queue.length === 0) return;
-
-    let success = true;
-
-    for (const item of queue) {
-      try {
-        if (item.action === 'upsertGoal') {
-          const currentGoal = goals[item.data.period];
-          if (item.data.period === 'daily' && item.data.date) {
-            // daily_goalsテーブルに保存
-            await dailyGoalsService.upsertDailyGoal({
-              target_date: item.data.date,
-              approached_target: item.data.approached ?? currentGoal.approached,
-              get_contacts_target: item.data.getContact ?? currentGoal.getContact,
-              instant_dates_target: item.data.instantDate ?? currentGoal.instantDate,
-              instant_cv_target: item.data.instantCv ?? currentGoal.instantCv,
-            });
-          }
-
-          // ローカルストレージも更新
-          const period = item.data.period;
-          const newGoals = { ...goals };
-          newGoals[period] = { ...newGoals[period], ...item.data };
-          await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(newGoals));
-          setGoals(newGoals);
-        }
-      } catch (error) {
-        console.error('同期エラー:', error);
-        success = false;
-        break;
-      }
-    }
-
-    if (success) {
-      await AsyncStorage.removeItem('offlineGoalChangeQueue');
-    }
-  };
+  }, [loadGoals]);
 
   // 目標値の設定
   const setGoal = useCallback(async (period: PeriodType, values: GoalValues) => {

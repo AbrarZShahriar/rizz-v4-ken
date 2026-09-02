@@ -23,7 +23,7 @@ export const UsernameForm: React.FC = () => {
       await updateProfile({ name: values.name });
       setSnackbarMessage('ユーザー名を更新しました');
       setSnackbarVisible(true);
-    } catch (error) {
+    } catch {
       setSnackbarMessage('ユーザー名の更新に失敗しました');
       setSnackbarVisible(true);
     }

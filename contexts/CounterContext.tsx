@@ -6,7 +6,6 @@ import * as recordService from '@/services/record';
 import * as goalService from '@/src/services/goal';
 import * as dailyGoalsService from '@/src/services/daily-goals';
 import { format } from 'date-fns';
-import { Alert } from 'react-native';
 
 export type PeriodType = 'daily' | 'weekly' | 'monthly' | 'yearly';
 
@@ -192,7 +191,7 @@ export function CounterProvider({ children }: { children: React.ReactNode }) {
     };
 
     loadTargets();
-  }, [user]);
+  }, [user, loadTargetsFromSupabase]);
 
   // カウンターの初期化処理
   const resetCounters = useCallback(async () => {

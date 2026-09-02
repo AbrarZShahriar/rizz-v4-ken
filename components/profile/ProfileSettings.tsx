@@ -45,7 +45,7 @@ export const ProfileSettings: React.FC = () => {
           try {
             const url = new URL(value);
             return url.protocol === 'http:' || url.protocol === 'https:';
-          } catch (e) {
+          } catch {
             return false;
           }
         }
@@ -63,7 +63,7 @@ export const ProfileSettings: React.FC = () => {
               url.hostname === 'x.com' ||
               url.hostname === 'www.x.com'
             );
-          } catch (e) {
+          } catch {
             return false;
           }
         }
@@ -113,7 +113,7 @@ export const ProfileSettings: React.FC = () => {
       setTimeout(async () => {
         await Updates.reloadAsync();
       }, 500);
-    } catch (e: any) {
+    } catch {
       setSnackbarMessage(t('theme_change_failed'));
       setSnackbarVisible(true);
     } finally {
@@ -138,7 +138,7 @@ export const ProfileSettings: React.FC = () => {
       setTimeout(async () => {
         await Updates.reloadAsync(); // アプリ全体に反映するためリロード
       }, 500);
-    } catch (e: any) {
+    } catch {
       setSnackbarMessage(t('language_change_failed'));
       setSnackbarVisible(true);
     } finally {

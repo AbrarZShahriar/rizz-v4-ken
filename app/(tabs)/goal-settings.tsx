@@ -10,14 +10,14 @@ import { ActivityIndicator } from 'react-native-paper';
 import { debugGoals, insertTestGoal } from '../../src/services/goal';
 
 export default function GoalSettingsScreen() {
-  const { resetCounters, loading } = useCounter();
+  const { resetCounters } = useCounter();
   const { user } = useAuth();
   const [refreshing, setRefreshing] = React.useState(false);
 
   // 画面が表示されたときにデータを同期
   useEffect(() => {
     resetCounters();
-  }, []);
+  }, [resetCounters]);
 
   // プルダウンリフレッシュの処理
   const onRefresh = React.useCallback(async () => {

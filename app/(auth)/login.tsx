@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { Link, router } from 'expo-router';
+import { Link } from 'expo-router';
 import { Text } from 'react-native-paper';
 import LoginForm from '../../components/auth/LoginForm';
 import FormLayout from '../../components/auth/FormLayout';

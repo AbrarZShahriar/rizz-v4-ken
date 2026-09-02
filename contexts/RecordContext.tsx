@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { CounterType, PeriodType } from '@/lib/types/record';
+import { CounterType } from '@/lib/types/record';
 import { useCounter } from './CounterContext';
 import * as recordService from '@/services/record';
 import { DailyRecordData } from '@/services/record';
@@ -64,26 +64,6 @@ export function RecordProvider({ children }: { children: React.ReactNode }) {
     loadCache();
   }, []);
 
-  // ネットワーク状態の監視
-  useEffect(() => {
-    const unsubscribe = NetInfo.addEventListener(state => {
-      const online = !!state.isConnected;
-      setIsOnline(online);
-
-      // オンラインに復帰した場合、オフライン変更を同期
-      if (online) {
-        syncOfflineChanges();
-      }
-    });
-
-    // ネットワーク状態の初期確認
-    NetInfo.fetch().then(state => {
-      setIsOnline(!!state.isConnected);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
   // オフライン変更キューの取得
   const getChangeQueue = useCallback(async (): Promise<ChangeQueueItem[]> => {
     try {
@@ -134,13 +114,13 @@ export function RecordProvider({ children }: { children: React.ReactNode }) {
 
   // オフラインの変更を同期
   const syncOfflineChanges = useCallback(async () => {
-    // オフラインの場合は何もしない
-    if (!isOnline) return;
-
-    setLoading(prev => ({ ...prev, approached: true, getContact: true, instantDate: true, instantCv: true }));
-    setError(null);
-
     try {
+      const networkState = await NetInfo.fetch();
+      if (!networkState.isConnected) return;
+
+      setLoading(prev => ({ ...prev, approached: true, getContact: true, instantDate: true, instantCv: true }));
+      setError(null);
+
       const queue = await getChangeQueue();
       if (queue.length === 0) {
         setLoading(prev => ({ ...prev, approached: false, getContact: false, instantDate: false, instantCv: false }));
@@ -182,7 +162,25 @@ export function RecordProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setLoading(prev => ({ ...prev, approached: false, getContact: false, instantDate: false, instantCv: false }));
     }
-  }, [isOnline, getChangeQueue, saveChangeQueue, updateCache]);
+  }, [getChangeQueue, saveChangeQueue, updateCache]);
+
+  // ネットワーク状態の監視
+  useEffect(() => {
+    const unsubscribe = NetInfo.addEventListener(state => {
+      const online = !!state.isConnected;
+      setIsOnline(online);
+
+      if (online) {
+        syncOfflineChanges();
+      }
+    });
+
+    NetInfo.fetch()
+      .then(state => setIsOnline(!!state.isConnected))
+      .catch(err => console.error('ネットワーク状態の取得エラー:', err));
+
+    return () => unsubscribe();
+  }, [syncOfflineChanges]);
 
   // 特定日の記録を取得
   const fetchDailyRecord = useCallback(async (date: string): Promise<DailyRecordData | null> => {
