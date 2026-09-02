@@ -6,7 +6,7 @@ interface FormInputProps {
   label: string;
   value: string;
   onChangeText: (text: string) => void;
-  onBlur?: () => void;
+  onBlur?: React.ComponentProps<typeof TextInput>['onBlur'];
   error?: string;
   touched?: boolean;
   placeholder?: string;

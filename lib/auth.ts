@@ -134,6 +134,6 @@ export async function resetPassword(email: string) {
     return { error: null };
   } catch (error) {
     console.error('パスワードリセットエラー:', error);
-    return { error };
+    return { error: error instanceof Error ? error : new Error(String(error)) };
   }
 }

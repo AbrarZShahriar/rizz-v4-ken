@@ -25,15 +25,6 @@ export const ProfileSettings: React.FC = () => {
   const [themeUpdating, setThemeUpdating] = useState(false);
   const [languageUpdating, setLanguageUpdating] = useState(false);
 
-  // 初回ロード時、またはprofileがまだロードされていない場合はローディング表示
-  if (loading && !profile) {
-    return (
-      <View style={styles.container}>
-        <ThemedText>{t('loading')}</ThemedText>
-      </View>
-    );
-  }
-
   // デバッグ用: 現在のi18n.languageとprofile.languageを出力
   console.log('i18n.language:', i18n.language, 'profile.language:', profile?.language);
 
@@ -99,6 +90,15 @@ export const ProfileSettings: React.FC = () => {
     newPassword: '',
     confirmPassword: '',
   }), [profile]);
+
+  // フックを常に同じ順序で呼び出した後にローディング表示を返す
+  if (loading && !profile) {
+    return (
+      <View style={styles.container}>
+        <ThemedText>{t('loading')}</ThemedText>
+      </View>
+    );
+  }
 
   // テーマ切替ハンドラ
   const handleThemeToggle = async () => {

@@ -1,5 +1,7 @@
 # Rizz - Activity Tracker
 
+[![CI](https://github.com/AbrarZShahriar/rizz-v4-ken/actions/workflows/ci.yml/badge.svg)](https://github.com/AbrarZShahriar/rizz-v4-ken/actions/workflows/ci.yml)
+
 Rizz is an Expo and React Native prototype for recording daily activity and
 progress across a sequence of milestones. It combines quick counters, goals,
 history, and statistics for daily, weekly, monthly, and yearly periods.
@@ -33,7 +35,7 @@ flowchart LR
     State --> Queue[Offline synchronization queue]
     Queue --> API[Supabase client]
     API --> Auth[Authentication]
-    API --> Data[PostgreSQL data with RLS]
+    API --> Data[Compatible PostgreSQL schema]
     State --> Insights[Goals and statistics]
 ```
 
@@ -55,8 +57,11 @@ Then run:
 git clone https://github.com/AbrarZShahriar/rizz-v4-ken.git
 cd rizz-v4-ken
 npm ci
+cp .env.example .env
 npm start
 ```
+
+On PowerShell, use `Copy-Item .env.example .env` instead of `cp`.
 
 Use the terminal shortcuts shown by Expo, or start a target directly:
 
@@ -68,34 +73,50 @@ npm run web
 
 ## Supabase configuration
 
-The committed Expo configuration uses the original development Supabase
-project. To use another Supabase project, create `.env` in the repository root:
+The original development backend is no longer available. Create a Supabase
+project, copy `.env.example` to `.env`, and set both values:
 
 ```dotenv
 EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-publishable-key
 ```
 
 The application code uses the `profiles`, `daily_records`, `goals`, and
 `daily_goals` tables. Database migrations are not included in this repository.
 Create a compatible schema and Row Level Security policies before you point the
 app at a new project. Values with the `EXPO_PUBLIC_` prefix are included in the
-client application, so database access must be protected by those policies.
+client application; they are not secrets. Protect every exposed table with
+tested Row Level Security policies and never use a Supabase secret or
+`service_role` key here.
+
+Without that schema, the interface can start but account and synchronization
+features will not work. Historical design notes under `docs/` are useful
+context, not a complete or verified database migration.
 
 ## Development commands
 
 ```bash
 npm start       # Start the Expo development server
-npm run lint    # Configure and run Expo ESLint
+npm run doctor  # Check Expo configuration and package compatibility
+npm run lint    # Run Expo ESLint
+npm run typecheck
 npm test        # Run Jest in watch mode
+npm run test:ci # Run Jest once, as CI does
 ```
 
-`npm ci` succeeds on the current snapshot. The first lint run creates an Expo
-ESLint configuration, but the existing application then reports lint errors.
-`npx tsc --noEmit` also reports existing type and unresolved-module errors.
-The Jest snapshot suite needs an AsyncStorage mock before it can run. The
-dependency audit also reports known vulnerabilities. Treat these results as a
-list of prototype cleanup work, not as a passing or production-ready baseline.
+The repository runs these checks on GitHub Actions. The current baseline passes
+Expo Doctor, ESLint, TypeScript, and Jest. ESLint still reports warnings in the
+prototype code. The Expo SDK 52 dependency tree also retains advisories that
+require a later SDK migration; do not treat this snapshot as production-ready.
+
+## Data and security
+
+Rizz communicates only with the Supabase project you configure. Authentication,
+profile, goal, and activity data go to that project; recent application data and
+queued changes are also cached on the device with AsyncStorage. The repository
+does not include analytics or telemetry integration.
+
+See [SECURITY.md](SECURITY.md) for the reporting path and deployment boundary.
 
 ## Repository layout
 

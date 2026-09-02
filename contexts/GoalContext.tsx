@@ -30,6 +30,12 @@ export interface GoalContextType {
 
 const GOALS_STORAGE_KEY = '@rizz_goals';
 
+interface GoalChangeQueueItem {
+  action: 'upsertGoal';
+  data: Partial<GoalValues> & { period: PeriodType };
+  timestamp: number;
+}
+
 // デフォルトの目標値
 const getDefaultGoalValues = (period: PeriodType, date?: string): GoalValues => ({
   period,
@@ -51,7 +57,7 @@ const getDefaultGoals = (): Record<PeriodType, GoalValues> => ({
 const GoalContext = createContext<GoalContextType | undefined>(undefined);
 
 // オフライン変更キューを取得
-const getGoalChangeQueue = async () => {
+const getGoalChangeQueue = async (): Promise<GoalChangeQueueItem[]> => {
   const queueStr = await AsyncStorage.getItem('offlineGoalChangeQueue');
   return queueStr ? JSON.parse(queueStr) : [];
 };
@@ -61,7 +67,7 @@ const addToGoalChangeQueue = async (period: PeriodType, data: Partial<GoalValues
   const queue = await getGoalChangeQueue();
 
   // 同じ期間の既存の変更があれば更新、なければ追加
-  const existingIndex = queue.findIndex((item: any) =>
+  const existingIndex = queue.findIndex((item) =>
     item.data.period === period &&
     (!data.date || item.data.date === data.date)
   );
@@ -113,10 +119,10 @@ export const GoalProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const today = format(new Date(), 'yyyy-MM-dd');
       const dailyGoal = await dailyGoalsService.getDailyGoal(today);
       if (dailyGoal.data) {
-        const updatedGoals = {
+        const updatedGoals: Record<PeriodType, GoalValues> = {
           ...goals,
           daily: {
-            period: 'daily',
+            period: 'daily' as const,
             approached: dailyGoal.data.approached_target,
             getContact: dailyGoal.data.get_contacts_target,
             instantDate: dailyGoal.data.instant_dates_target,
@@ -160,14 +166,15 @@ export const GoalProvider: React.FC<{ children: React.ReactNode }> = ({ children
     for (const item of queue) {
       try {
         if (item.action === 'upsertGoal') {
+          const currentGoal = goals[item.data.period];
           if (item.data.period === 'daily' && item.data.date) {
             // daily_goalsテーブルに保存
             await dailyGoalsService.upsertDailyGoal({
               target_date: item.data.date,
-              approached_target: item.data.approached,
-              get_contacts_target: item.data.getContact,
-              instant_dates_target: item.data.instantDate,
-              instant_cv_target: item.data.instantCv,
+              approached_target: item.data.approached ?? currentGoal.approached,
+              get_contacts_target: item.data.getContact ?? currentGoal.getContact,
+              instant_dates_target: item.data.instantDate ?? currentGoal.instantDate,
+              instant_cv_target: item.data.instantCv ?? currentGoal.instantCv,
             });
           }
 

@@ -16,6 +16,8 @@ export interface DailyRecordData {
   updated_at?: string;
 }
 
+type CounterColumn = 'approached' | 'get_contact' | 'instant_date' | 'instant_cv';
+
 // エラーレスポンスの型
 interface ErrorResponse {
   message: string;
@@ -306,7 +308,7 @@ export const incrementCounter = async (
     const { data: existingRecord } = await getDailyRecord(gameDate);
     
     // カウンタータイプをSupabaseのカラム名に変換
-    const columnMap: Record<CounterType, string> = {
+    const columnMap: Record<CounterType, CounterColumn> = {
       approached: 'approached',
       getContact: 'get_contact',
       instantDate: 'instant_date',
@@ -331,9 +333,9 @@ export const incrementCounter = async (
     
     // 記録が存在しない場合は他のカウンターを0で初期化
     if (!existingRecord) {
-      Object.keys(columnMap).forEach(key => {
-        if (key !== type) {
-          updateData[columnMap[key as CounterType]] = 0;
+      Object.entries(columnMap).forEach(([counterType, mappedColumn]) => {
+        if (counterType !== type) {
+          updateData[mappedColumn] = 0;
         }
       });
     }

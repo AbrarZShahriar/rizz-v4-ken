@@ -2,19 +2,19 @@ import { useEffect, useState } from 'react';
 import { useColorScheme as useNativeColorScheme } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type ColorScheme = 'light' | 'dark' | null;
+type ColorScheme = 'light' | 'dark';
 
 interface ColorSchemeHook {
   colorScheme: ColorScheme;
-  setColorScheme: (scheme: 'light' | 'dark') => void;
-  resetColorScheme: () => void;
+  setColorScheme: (scheme: ColorScheme) => Promise<void>;
+  resetColorScheme: () => Promise<void>;
 }
 
 const COLOR_SCHEME_KEY = '@rizz_app_color_scheme';
 
 export const useColorScheme = (): ColorSchemeHook => {
-  const nativeColorScheme = useNativeColorScheme() as ColorScheme;
-  const [colorScheme, setColorSchemeState] = useState<ColorScheme>(null);
+  const nativeColorScheme = useNativeColorScheme() ?? 'dark';
+  const [colorScheme, setColorSchemeState] = useState<ColorScheme | null>(null);
 
   // 初期化時に保存されたカラースキームを読み込み
   useEffect(() => {
@@ -23,7 +23,7 @@ export const useColorScheme = (): ColorSchemeHook => {
         const storedColorScheme = await AsyncStorage.getItem(COLOR_SCHEME_KEY);
         if (storedColorScheme) {
           console.log('保存されたテーマを読み込みました:', storedColorScheme);
-          setColorSchemeState(storedColorScheme as ColorScheme);
+          setColorSchemeState(storedColorScheme === 'light' ? 'light' : 'dark');
         } else {
           console.log('保存されたテーマがないため、デフォルトを使用します: dark');
           setColorSchemeState('dark'); // デフォルトをダークモードに変更
@@ -40,7 +40,7 @@ export const useColorScheme = (): ColorSchemeHook => {
   }, []);
 
   // カラースキームを設定し、永続化
-  const setColorScheme = async (scheme: 'light' | 'dark') => {
+  const setColorScheme = async (scheme: ColorScheme) => {
     try {
       console.log('テーマを設定します:', scheme);
       // まずステートを更新して、UIが即座に反映されるようにする
@@ -63,7 +63,7 @@ export const useColorScheme = (): ColorSchemeHook => {
   };
 
   return {
-    colorScheme: colorScheme || nativeColorScheme,
+    colorScheme: colorScheme ?? nativeColorScheme,
     setColorScheme,
     resetColorScheme,
   };
