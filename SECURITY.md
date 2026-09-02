@@ -8,9 +8,11 @@ schedule.
 
 ## Reporting a vulnerability
 
-Please report a vulnerability privately to `a.zshahriar@gmail.com`. Include the
-affected file or component, the observed impact, and reproduction steps when
-possible. Do not include credentials or personal data in a public issue.
+Use GitHub's [private vulnerability reporting
+form](https://github.com/AbrarZShahriar/rizz-v4-ken/security/advisories/new).
+Include the affected file or component, the observed impact, and reproduction
+steps when possible. Do not include credentials or personal data in a public
+issue. If the form is unavailable, email `a.zshahriar@gmail.com`.
 
 ## Supabase deployment boundary
 
