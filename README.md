@@ -1,9 +1,8 @@
-# Rizz
+# Rizz - Activity Tracker
 
-Rizz is an Expo and React Native prototype for recording and reviewing street
-game activity. It tracks approaches, contacts, instant dates, and instant
-closes. It also provides goals and statistics for daily, weekly, monthly, and
-yearly periods.
+Rizz is an Expo and React Native prototype for recording daily activity and
+progress across a sequence of milestones. It combines quick counters, goals,
+history, and statistics for daily, weekly, monthly, and yearly periods.
 
 > Project status: prototype. The current source targets Expo SDK 52 and React
 > Native 0.76. It is not a published App Store or Play Store release.
