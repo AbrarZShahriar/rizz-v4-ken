@@ -1,109 +1,94 @@
-# Rizz - Street Game Tracking App
+# Rizz
 
-A mobile application for tracking and analyzing street game performance metrics.
+Rizz is an Expo and React Native prototype for recording and reviewing street
+game activity. It tracks approaches, contacts, instant dates, and instant
+closes. It also provides goals and statistics for daily, weekly, monthly, and
+yearly periods.
 
-## Project Overview
+> Project status: prototype. The current source targets Expo SDK 52 and React
+> Native 0.76. It is not a published App Store or Play Store release.
 
-Rizz helps users record and analyze their street game activities with metrics like approach count, contact acquisition, same-day dates, and close rates. The app provides visualization through progress bars and charts with daily/weekly/monthly/yearly analytics.
+## Features
 
-## Tech Stack
+- Email sign-up and sign-in through Supabase Authentication.
+- Daily counters with goal progress and historical statistics.
+- Offline caching and a queued synchronization path with AsyncStorage.
+- Profile, theme, and goal settings.
+- English and Japanese interface text.
+- Android, iOS, and web development targets through Expo.
 
-### Frontend
-- **Framework**: Expo + React Native
-- **Language**: TypeScript
-- **UI**: React Native Paper + Expo Vector Icons
-- **Navigation**: Expo Router
-- **State Management**: Context API + useReducer
-- **Forms**: Formik + Yup
-- **Charts**: Victory Native
+## Tech stack
 
-### Backend
-- **Supabase**
-  - PostgreSQL Database
-  - Authentication
-  - Storage
-  - Row Level Security (RLS)
+- Expo SDK 52, React Native 0.76, React 18, and TypeScript.
+- Expo Router and React Native Paper.
+- Supabase for authentication and PostgreSQL data.
+- Context providers for records, goals, profiles, and settings.
+- Formik and Yup for forms and validation.
 
-## Getting Started
+## Run locally
 
-### Prerequisites
-- Node.js 16.x or higher
-- npm or Yarn
-- Expo CLI
-- Supabase account
+Install Node.js 18 or later, npm, and one of the following:
 
-### Setup
+- Expo Go on a physical device.
+- Android Studio with an Android emulator.
+- Xcode with an iOS simulator on macOS.
 
-1. **Clone the repository**
+Then run:
+
 ```bash
-git clone https://github.com/yourusername/rizz-v4.git
-cd rizz-v4
-```
-
-2. **Install dependencies**
-```bash
-npm install
-# or
-yarn install
-```
-
-3. **Environment configuration**
-Create a `.env` file in the root directory with the following variables:
-```
-EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. **Start development server**
-```bash
+git clone https://github.com/AbrarZShahriar/rizz-v4-ken.git
+cd rizz-v4-ken
+npm ci
 npm start
 ```
 
-5. **Run on device/emulator**
-- Press `a` to run on Android emulator
-- Press `i` to run on iOS simulator
-- Scan the QR code with Expo Go app on your physical device
-
-## Database Schema
-
-The app uses three main tables:
-- **users**: User authentication and profile data
-- **daily_records**: Daily game activity records
-- **goals**: User-defined performance targets
-
-## Project Structure
-
-```
-rizz-v4/
-├── app/                 # Expo Router pages
-├── src/
-│   ├── components/      # UI components
-│   ├── contexts/        # Context providers
-│   ├── hooks/           # Custom hooks
-│   ├── services/        # API services
-│   ├── types/           # TypeScript types
-│   └── utils/           # Utility functions
-├── assets/              # Static assets
-└── [configuration files]
-```
-
-## Development Commands
+Use the terminal shortcuts shown by Expo, or start a target directly:
 
 ```bash
-# Start the development server
-npm start
-
-# Build for production
-eas build --platform all
-
-# Submit to stores
-eas submit -p ios
-eas submit -p android
-
-# Run tests
-npm test
+npm run android
+npm run ios
+npm run web
 ```
 
-## Offline Support
+## Supabase configuration
 
-The app implements offline functionality using AsyncStorage and a synchronization queue system that automatically processes pending operations when the device comes back online.
+The committed Expo configuration uses the original development Supabase
+project. To use another Supabase project, create `.env` in the repository root:
+
+```dotenv
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+The application code uses the `profiles`, `daily_records`, `goals`, and
+`daily_goals` tables. Database migrations are not included in this repository.
+Create a compatible schema and Row Level Security policies before you point the
+app at a new project. Values with the `EXPO_PUBLIC_` prefix are included in the
+client application, so database access must be protected by those policies.
+
+## Development commands
+
+```bash
+npm start       # Start the Expo development server
+npm run lint    # Configure and run Expo ESLint
+npm test        # Run Jest in watch mode
+```
+
+`npm ci` succeeds on the current snapshot. The first lint run creates an Expo
+ESLint configuration, but the existing application then reports lint errors.
+`npx tsc --noEmit` also reports existing type and unresolved-module errors.
+The Jest snapshot suite needs an AsyncStorage mock before it can run. The
+dependency audit also reports known vulnerabilities. Treat these results as a
+list of prototype cleanup work, not as a passing or production-ready baseline.
+
+## Repository layout
+
+```text
+app/          Expo Router screens and layouts
+components/   Reusable interface components
+contexts/     Application state and synchronization
+services/     Supabase data access
+src/          Types and additional services
+locales/      English and Japanese translations
+docs/         Product notes, issue notes, and development logs
+```
